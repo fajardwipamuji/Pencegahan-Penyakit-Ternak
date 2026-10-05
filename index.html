@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SakuVet - Identifikasi & Kuis Penyakit Unggas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2E7D32;
+            --primary-light: #4CAF50;
+            --primary-dark: #1B5E20;
+            --viral: #D32F2F; 
+            --bacterial: #1976D2; 
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --radius: 12px;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            color: white;
+            padding: 2rem 1rem 1rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 1.5rem auto;
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .nav-btn.active {
+            background: white;
+            color: var(--primary-dark);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .badge-notification {
+            background: #ef4444;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .section-title {
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            font-size: 1.5rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            overflow: hidden;
+            cursor: pointer;
+            transition: var(--transition);
+            border-top: 5px solid #ccc;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+        }
+
+        .card.viral { border-top-color: var(--viral); }
+        .card.bacterial { border-top-color: var(--bacterial); }
+
+        .card-body {
+            padding: 1.5rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .card-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1));
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #1e293b;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.35rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+        }
+
+        .badge.viral { background-color: #fee2e2; color: #b91c1c; }
+        .badge.bacterial { background-color: #dbeafe; color: #1d4ed8; }
+
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(15, 23, 42, 0.75);
+            display: flex;
+            align-items: center; justify-content: center;
+            z-index: 1000;
+            opacity: 0; visibility: hidden;
+            transition: var(--transition);
+            backdrop-filter: blur(4px);
+            padding: 1rem;
+        }
+
+        .modal.active {
+            opacity: 1; visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border-radius: var(--radius);
+            width: 100%; max-width: 850px; max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: scale(0.95) translateY(10px);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .modal.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 10;
+        }
+
+        .close-btn {
+            background: #f1f5f9; border: none;
+            width: 36px; height: 36px; border-radius: 50%;
+            font-size: 1.2rem; cursor: pointer; color: #64748b;
+            display: flex; align-items: center; justify-content: center;
+            transition: var(--transition);
+        }
+        .close-btn:hover { background: #e2e8f0; color: #0f172a; }
+
+        .modal-body { padding: 2rem; }
+
+        .pathognomonic-box {
+            background: linear-gradient(to right, #fffbeb, #fef3c7);
+            border-left: 5px solid #f59e0b;
+            padding: 1.2rem; border-radius: 0 8px 8px 0;
+            margin-bottom: 1.5rem;
+        }
+        
+        .pathognomonic-box h3 { color: #b45309; margin-bottom: 0.5rem; font-size: 1.1rem; }
+
+        .mgmt-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .mgmt-grid { grid-template-columns: 1fr; }
+        }
+
+        .mgmt-card {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .mgmt-card h4 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .prevention h4 { color: var(--primary); }
+        .treatment h4 { color: #d97706; }
+
+        .mgmt-list { list-style: none; }
+        .mgmt-list li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+        .mgmt-list li::before {
+            content: '✓';
+            position: absolute; left: 0;
+            font-weight: bold;
+        }
+        .prevention .mgmt-list li::before { color: var(--primary); }
+        .treatment .mgmt-list li::before { color: #d97706; }
+
+        /* KUIS STYLING */
+        #quiz-section { display: none; }
+        
+        .quiz-container {
+            background: white;
+            padding: 2rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .quiz-header {
+            background: #f1f5f9;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .quiz-header h3 { color: var(--primary-dark); margin-bottom: 0.5rem; }
+        .quiz-header p { font-size: 0.95rem; color: var(--text-muted); }
+
+        .question-block {
+            margin-bottom: 2.5rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px dashed #cbd5e1;
+        }
+
+        .question-block:last-of-type {
+            border-bottom: none;
+            margin-bottom: 1rem;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        
+        .question-text span.badge {
+            margin-right: 10px;
+            background-color: var(--primary-light);
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .options-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 2px solid transparent;
+            font-size: 1rem;
+        }
+
+        .option-label:hover { background: #e2e8f0; }
+        
+        .option-label input[type="radio"] {
+            margin-top: 4px;
+            transform: scale(1.2);
+            accent-color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .option-label.correct {
+            background: #dcfce7;
+            border-color: #22c55e;
+        }
+
+        .option-label.wrong {
+            background: #fee2e2;
+            border-color: #ef4444;
+        }
+
+        .explanation {
+            margin-top: 1rem;
+            padding: 1.2rem;
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            border-radius: 0 8px 8px 0;
+            display: none;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .explanation.show { display: block; animation: fadeIn 0.5s; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn-submit {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1.2rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: var(--transition);
+            margin-top: 2rem;
+            box-shadow: 0 4px 6px rgba(46, 125, 50, 0.2);
+        }
+
+        .btn-submit:hover { 
+            background: var(--primary-dark); 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(46, 125, 50, 0.3);
+        }
+
+        #quiz-result {
+            text-align: center;
+            margin-top: 2rem;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border-radius: 12px;
+            display: none;
+            border: 1px solid #bbf7d0;
+        }
+
+        #quiz-result h3 { font-size: 2.5rem; color: var(--primary-dark); margin-bottom: 1rem;}
+        #quiz-result p { font-size: 1.1rem; color: #166534; margin-bottom: 2rem;}
+
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>SakuVet SMK</h1>
+        <p>Buku Saku Digital Identifikasi, Pencegahan, Pengobatan Penyakit Unggas & Kuis HOTS</p>
+        <nav id="main-nav">
+            <button class="nav-btn active" onclick="switchTab('all', this)">Semua Penyakit</button>
+            <button class="nav-btn" onclick="switchTab('viral', this)">Penyakit Viral</button>
+            <button class="nav-btn" onclick="switchTab('bacterial', this)">Penyakit Bakterial</button>
+            <button class="nav-btn" onclick="switchTab('quiz', this)">
+                Kuis HOTS Interaktif
+                <span class="badge-notification">10 Soal</span>
+            </button>
+        </nav>
+    </header>
+
+    <div class="container">
+        
+        <div id="disease-section">
+            <h2 class="section-title" id="section-title">Daftar Penyakit Utama</h2>
+            <div class="grid" id="disease-grid">
+                <!-- Cards will be generated here -->
+            </div>
+        </div>
+
+        <div id="quiz-section">
+            <h2 class="section-title">Uji Kompetensi: Analisis Kasus (HOTS)</h2>
+            <div class="quiz-container">
+                <div class="quiz-header">
+                    <h3>Simulasi Diagnosa Dokter Hewan</h3>
+                    <p>Jawablah 10 studi kasus di bawah ini. Kasus-kasus ini akan menguji kemampuan Anda dalam menganalisis gejala klinis, temuan nekropsi, manajemen biosekuriti, dan rasionalisasi pengobatan (Tidak sekadar hafalan).</p>
+                </div>
+
+                <form id="quiz-form">
+                    <div id="questions-container">
+                        <!-- Questions will be generated here -->
+                    </div>
+                    <button type="button" class="btn-submit" id="btn-submit-quiz" onclick="submitQuiz()">Kirim Semua Jawaban & Lihat Hasil</button>
+                </form>
+
+                <div id="quiz-result">
+                    <h3>Skor Akhir: <span id="score-display">0</span> / 100</h3>
+                    <p id="score-message">Terus tingkatkan pemahaman klinis Anda!</p>
+                    <button class="nav-btn" style="background: var(--primary-dark); color: white; padding: 1rem 2rem; font-size: 1.1rem;" onclick="resetQuiz()">Ulangi Kuis</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Penyakit -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2 id="modal-title" style="font-size: 1.5rem; margin-bottom: 0.2rem;">Nama Penyakit</h2>
+                    <div style="font-style: italic; color: var(--text-muted); font-size: 0.95rem;" id="modal-etiology">Etiologi</div>
+                </div>
+                <button class="close-btn" id="close-modal">✕</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Content generated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const diseases = [
+            {
+                id: 'nd',
+                name: 'Newcastle Disease (ND) / Tetelo',
+                type: 'viral',
+                etiology: 'Avian paramyxovirus type 1 (APMV-1)',
+                icon: '🐔 🔄',
+                shortDesc: 'Penyakit viral akut menyerang pernapasan, pencernaan, dan syaraf.',
+                pathognomonic: 'Torticollis (leher terpelintir), sayap lumpuh/terkulai, dan diare berwarna hijau royo-royo (hijau lumut kecoklatan).',
+                anatomy: 'Pendarahan (petechiae) pada proventrikulus (lambung kelenjar) dan tonsil sekum (usus buntu).',
+                prevention: [
+                    'Vaksinasi aktif via tetes mata (intraocular) untuk DOC.',
+                    'Vaksinasi booster (ulangan) via air minum atau suntik sesuai program.',
+                    'Terapkan biosekuriti ketat, batasi lalu lintas orang ke kandang.'
+                ],
+                treatment: [
+                    'TIDAK ADA OBAT. Antibiotik tidak dapat membunuh virus.',
+                    'Segera lakukan culling (pemusnahan) pada ayam yang menunjukkan gejala syaraf parah.',
+                    'Pisahkan (isolasi) ayam yang sakit dari koloni sehat.',
+                    'Berikan multivitamin (Vit C/E) dan elektrolit untuk unggas sehat guna meminimalisir stres.'
+                ]
+            },
+            {
+                id: 'gumboro',
+                name: 'Infectious Bursal Disease (Gumboro)',
+                type: 'viral',
+                etiology: 'Avibirnavirus',
+                icon: '🐔 📉',
+                shortDesc: 'AIDS-nya ayam. Merusak sistem imun sehingga rentan infeksi lain.',
+                pathognomonic: 'Ayam terlihat sangat lemas, menggigil, sering mematuk area kloakanya sendiri. Feses berwarna putih kapur dan lengket di sekitar vent.',
+                anatomy: 'Pembengkakan, pendarahan, hingga pengecilan (atrofi) ekstrem pada Bursa Fabricius (organ di atas kloaka).',
+                prevention: [
+                    'Vaksinasi Gumboro via air minum secara tepat (gunakan susu skim sebagai pelindung virus vaksin).',
+                    'Sanitasi total kandang setelah panen, karena virus ini sangat tahan di lingkungan (litter).'
+                ],
+                treatment: [
+                    'TIDAK ADA antibiotik untuk penyakit ini.',
+                    'Jangan berikan antibiotik karena akan memperberat kerja ginjal yang sedang rusak.',
+                    'Berikan larutan air gula merah (2-5%) dan elektrolit untuk mengatasi dehidrasi parah.',
+                    'Bantu turunkan suhu tubuh jika ayam demam (perbaiki sirkulasi).'
+                ]
+            },
+            {
+                id: 'snot',
+                name: 'Coryza / Snot (Pilek Menular)',
+                type: 'bacterial',
+                etiology: 'Avibacterium paragallinarum',
+                icon: '🐔 🤧',
+                shortDesc: 'Infeksi pernapasan memicu pembengkakan wajah dan turunnya nafsu makan.',
+                pathognomonic: 'Pembengkakan ekstrim pada area wajah (sinus infraorbitalis). Keluar lendir (eksudat) kental berbau sangat busuk dari hidung.',
+                anatomy: 'Terdapat eksudat kataral hingga perkejuan di dalam rongga hidung dan sinus mata.',
+                prevention: [
+                    'Perbaiki manajemen litter (alas kandang). Jangan biarkan sekam basah yang memicu amonia.',
+                    'Perbaiki sirkulasi udara (ventilasi) dan kurangi kepadatan tebar.',
+                    'Vaksinasi Coryza (inaktif/suntik) pada peternakan layer/ayam petelur.'
+                ],
+                treatment: [
+                    'Karena ini bakteri, berikan antibiotik spektrum luas.',
+                    'Gunakan golongan Amoxicillin, Ampicillin, atau Enrofloxacin via air minum/suntik.',
+                    'Bersihkan leleran hidung jika memungkinkan, dan semprot kandang dengan desinfektan ramah unggas.'
+                ]
+            },
+            {
+                id: 'crd',
+                name: 'Chronic Respiratory Disease (CRD)',
+                type: 'bacterial',
+                etiology: 'Mycoplasma gallisepticum',
+                icon: '🐔 🫁',
+                shortDesc: 'Penyakit pernapasan lambat. Bakterinya unik, tidak berdinding sel.',
+                pathognomonic: 'Ngorok basah (rales) terutama di malam hari, bersin, dan terdapat gelembung-gelembung air kecil (bubbles) di sudut mata.',
+                anatomy: 'Kantung udara (air sac) keruh dan menebal (Aerosakulitis). Jika sudah CRD Kompleks, jantung dan hati tertutup selaput.',
+                prevention: [
+                    'Minimalisir debu dan gas amonia di dalam kandang.',
+                    'Jaga suhu kandang agar tidak terlalu dingin/fluktuatif di malam hari (hindari stres kedinginan).'
+                ],
+                treatment: [
+                    'PENTING: Bakteri ini tidak punya dinding sel. Antibiotik Penisilin (Amoxicillin/Ampicillin) TIDAK MEMPAN.',
+                    'Gunakan antibiotik Makrolida (contoh: Tylosin, Erythromycin) atau Tetrasiklin (Doxycycline).',
+                    'Berikan obat herbal pelega pernapasan/ekspektoran untuk membantu mengeluarkan lendir.'
+                ]
+            },
+            {
+                id: 'colibacillosis',
+                name: 'Colibacillosis',
+                type: 'bacterial',
+                etiology: 'Escherichia coli',
+                icon: '🦠 🐔',
+                shortDesc: 'Penyakit sekunder oportunistik pencernaan dan pernapasan.',
+                pathognomonic: 'Pertumbuhan kerdil tidak merata. Lesu, bulu berdiri. Biasanya berkolaborasi dengan CRD menjadi CRD Kompleks.',
+                anatomy: 'Ditemukan selaput fibrin (selaput putih kekuningan) menyelimuti hati (Perihepatitis) dan jantung (Pericarditis).',
+                prevention: [
+                    'Sanitasi sumber air minum. Lakukan klorinasi/kaporitisasi ringan jika air terkontaminasi feses.',
+                    'Jaga kebersihan pakan dari jamur dan kotoran.',
+                    'Cegah penyakit primer penyerta (seperti CRD).'
+                ],
+                treatment: [
+                    'Berikan antibiotik yang peka terhadap bakteri Gram-negatif, seperti Enrofloxacin, Colistin, atau Neomycin.',
+                    'Kuras dan desinfeksi toren air serta jalur pipa nipple/minum.'
+                ]
+            }
+        ];
+
+        // 10 Soal HOTS Interaktif
+        const quizQuestions = [
+            {
+                q: "Kasus 1: Ayam broiler berumur 28 hari menunjukkan gejala ngorok basah. Saat dilakukan nekropsi, tidak ada pembengkakan wajah, namun kantung udara (air sac) terlihat keruh. Peternak berencana memberikan antibiotik golongan Penisilin (Amoxicillin). Evaluasi rencana peternak tersebut!",
+                options: [
+                    "Sangat tepat, karena Amoxicillin adalah antibiotik berspektrum luas untuk semua bakteri pernapasan.",
+                    "Kurang tepat, seharusnya dosis Amoxicillin digandakan karena serangannya sudah masuk ke dalam kantung udara.",
+                    "Tidak tepat. Penyakit ini adalah CRD (Mycoplasma) yang bakterinya tidak berdinding sel, sehingga Amoxicillin tidak akan mempan.",
+                    "Tidak tepat. Penyakit ini adalah ND (Viral), sehingga pemberian antibiotik jenis apapun tidak akan menyembuhkan ayam."
+                ],
+                answer: 2,
+                explanation: "Gejala kantung udara keruh dan ngorok (tanpa wajah bengkak) mengarah ke penyakit CRD (Mycoplasma gallisepticum). Bakteri Mycoplasma ini sangat unik karena tidak memiliki dinding sel. Amoxicillin bekerja dengan cara merusak dinding sel bakteri, sehingga obat ini otomatis TIDAK AKAN BEKERJA pada CRD. Pengobatan yang tepat adalah menggunakan antibiotik golongan Makrolida seperti Tylosin."
+            },
+            {
+                q: "Kasus 2: Sebuah peternakan ayam mengalami kematian dengan gejala gemetar, feses putih kapur, dan suka mematuk kloaka (Gumboro). Setelah ayam yang sembuh dipelihara kembali, mereka rutin divaksin ND. Namun 2 minggu kemudian, mereka tetap terkena wabah ND. Mengapa vaksinasi ND tersebut gagal?",
+                options: [
+                    "Vaksin ND yang digunakan oleh peternak pasti sudah rusak karena terpapar suhu panas.",
+                    "Virus Gumboro berevolusi dan bermutasi secara genetik menjadi virus ND varian baru di dalam tubuh ayam.",
+                    "Gumboro merusak Bursa Fabricius (organ pencetak antibodi), menyebabkan imunosupresi, sehingga vaksin ND gagal merangsang antibodi.",
+                    "Ayam mengalami stres pasca Gumboro sehingga tidak mau minum air yang mengandung vaksin ND."
+                ],
+                answer: 2,
+                explanation: "Gumboro (Infectious Bursal Disease) disebut 'AIDS-nya ayam' karena target utamanya adalah menghancurkan Bursa Fabricius, tempat limfosit B (sel penghasil antibodi) diproduksi. Akibatnya ayam mengalami kerusakan sistem imun (imunosupresi). Walaupun ayam selamat, tubuhnya sudah tidak mampu lagi merespon vaksinasi (seperti ND) untuk membentuk kekebalan baru."
+            },
+            {
+                q: "Kasus 3: Dalam prosedur vaksinasi Gumboro melalui air minum secara massal, peternak diwajibkan melarutkan 'Susu Skim' dengan dosis 2 gram per liter air sebelum vaksin dimasukkan. Apa fungsi utama susu skim secara medis/kimiawi?",
+                options: [
+                    "Memberikan nutrisi protein tambahan agar virus vaksin dapat berkembang biak lebih banyak di dalam air.",
+                    "Mengikat ion logam berat dan menetralkan residu kaporit (klorin) di dalam air agar virus vaksin tidak mati sebelum terminum.",
+                    "Menambah rasa manis dan aroma agar nafsu minum ayam meningkat sehingga vaksin habis dalam 1 jam.",
+                    "Mengentalkan air minum sehingga vaksin tidak mengendap di dasar tempat minum gantung (bell drinker)."
+                ],
+                answer: 1,
+                explanation: "Vaksin yang diberikan via air minum adalah vaksin aktif (virus hidup yang dilemahkan). Virus ini sangat rapuh terhadap kualitas air (kaporit, pH ekstrem, logam berat). Susu skim mengandung protein hewani yang bertindak sebagai 'stabilizer' (penstabil) yang mengikat klorin dan logam berat, menjaga virus tetap hidup sampai masuk ke tubuh ayam."
+            },
+            {
+                q: "Kasus 4: Peternak menemukan beberapa ayam meneteskan air liur, leher terpelintir menghadap ke atas (torticollis), dan kotorannya berwarna hijau royo-royo. Langkah manajemen PERTAMA yang paling rasional berdasarkan standar kedokteran hewan adalah?",
+                options: [
+                    "Segera isolasi ayam tersebut, lalu berikan antibiotik spektrum luas melalui suntikan intramuskular.",
+                    "Biarkan di kandang namun pisahkan dengan sekat, lalu paksa ayam tersebut meminum larutan vaksin ND ulang.",
+                    "Lakukan culling (pemusnahan) pada ayam yang sakit, lalu berikan vitamin+elektrolit untuk populasi sisanya yang masih sehat.",
+                    "Tingkatkan kecepatan kipas (blower) dan taburkan kapur aktif yang banyak di atas sekam untuk membunuh virusnya."
+                ],
+                answer: 2,
+                explanation: "Gejala tersebut adalah tanda patognomonis absolut dari Newcastle Disease (ND) fase syaraf. ND adalah penyakit viral (TIDAK ADA OBAT antibiotiknya). Ayam yang sudah menunjukkan gejala syaraf (torticollis) tidak bisa disembuhkan dan akan terus melepaskan (shedding) virus ke lingkungan. Langkah terbaik adalah pemusnahan (culling) sumber penyakit, dan melindungi sisa koloni yang sehat dengan vitamin anti-stres."
+            },
+            {
+                q: "Kasus 5: Saat membedah (nekropsi) broiler kerdil, Anda menemukan lapisan putih kekuningan seperti keju tipis (fibrin) yang lengket menyelimuti seluruh organ hati (perihepatitis) dan jantung (pericarditis). Temuan ini merupakan indikasi kuat komplikasi penyakit?",
+                options: [
+                    "ND dan Gumboro",
+                    "CRD (Mycoplasma) dan Colibacillosis (E. coli)",
+                    "Coryza / Snot dan Newcastle Disease (ND)",
+                    "Gumboro dan Colibacillosis"
+                ],
+                answer: 1,
+                explanation: "Selaput fibrin pada jantung (pericarditis) dan hati (perihepatitis) adalah ciri khas dari Colibacillosis (infeksi bakteri E. coli). Bakteri ini sangat jarang menyerang sendiri, melainkan masuk sebagai infeksi sekunder (ikutan) setelah saluran pernapasan ayam dirusak oleh penyakit primer, paling sering oleh CRD (Mycoplasma). Komplikasi ini dikenal dengan nama mematikan 'CRD Kompleks'."
+            },
+            {
+                q: "Kasus 6: Peternak mengobati wabah Coryza (Snot) dengan Enrofloxacin selama 3 hari. Ayam tampak membaik, namun 5 hari kemudian penyakit ini kambuh lagi secara massal dengan gejala wajah bengkak dan bau busuk yang sama. Analisis faktor kegagalan apa yang paling masuk akal?",
+                options: [
+                    "Ayam sudah mengalami resistensi genetik terhadap antibiotik Enrofloxacin.",
+                    "Peternak salah memilih jenis antibiotik, Snot seharusnya diobati dengan Tylosin (Makrolida).",
+                    "Peternak hanya mengobati gejalanya, namun gagal memperbaiki faktor predisposisi lingkungan (seperti tingginya gas amonia dari sekam yang basah).",
+                    "Virus Coryza bermutasi karena durasi pemberian antibiotik yang terlalu singkat (kurang dari 7 hari)."
+                ],
+                answer: 2,
+                explanation: "Coryza (Snot) sangat dipicu oleh lingkungan yang buruk. Sekam (litter) yang basah menghasilkan gas amonia pekat. Amonia membakar dan merusak silia (bulu getar) pelindung hidung ayam, membuat bakteri Avibacterium mudah masuk terus-menerus. Jika kandang tetap bau amonia, pengobatan medis semahal apapun akan percuma karena re-infeksi akan terus terjadi."
+            },
+            {
+                q: "Kasus 7: Sebanyak 3.000 ekor ayam mati mendadak dalam 2 hari. Nekropsi menunjukkan adanya bintik pendarahan (petechiae) pada lambung kelenjar (proventrikulus). Peternak panik dan memborong antibiotik Amoxicillin dosis ganda. Apa evaluasi Anda terhadap tindakan kepanikan ini?",
+                options: [
+                    "Tepat, karena pendarahan lambung menandakan infeksi bakteri usus ganas yang butuh dosis ganda.",
+                    "Salah total, gejala pendarahan proventrikulus adalah ciri penyakit viral (ND), sehingga pemberian antibiotik jenis dan dosis berapapun adalah pemborosan belaka.",
+                    "Kurang tepat, antibiotik yang digunakan harusnya golongan Tetrasiklin agar bisa menembus hingga ke dinding lambung.",
+                    "Tepat, asalkan dicampur dengan vitamin K untuk segera menghentikan pendarahan lambungnya."
+                ],
+                answer: 1,
+                explanation: "Pendarahan (petechiae) pada proventrikulus adalah ciri khas dari ND (Newcastle Disease), yang merupakan penyakit akibat VIRUS. Prinsip medis dasar: Antibiotik hanya membunuh bakteri, bukan virus. Memberikan antibiotik untuk kasus ND adalah kesalahan fatal dan pemborosan uang."
+            },
+            {
+                q: "Kasus 8: Di peternakan breeder, manajer mewajibkan vaksinasi ND pertama pada Day Old Chick (DOC) harus menggunakan metode tetes mata (intraocular), BUKAN melalui air minum. Mengapa metode tetes mata jauh lebih superior secara medis untuk DOC?",
+                options: [
+                    "Karena DOC belum bisa melihat dengan jelas tempat minum gantung, sehingga berisiko kehausan berjam-jam.",
+                    "Untuk menghindari virus vaksin dihancurkan oleh tingkat keasaman (pH) lambung DOC yang sangat tinggi.",
+                    "Tetesan tepat pada kelenjar Harderian di area mata akan merangsang kekebalan lokal (mukosa) saluran napas atas secara instan, mencegah virus masuk dari udara.",
+                    "Karena metode tetes mata bisa dikerjakan lebih cepat oleh 1 orang dibandingkan mempersiapkan banyak tempat air minum."
+                ],
+                answer: 2,
+                explanation: "Di area sekitar mata unggas terdapat organ khusus bernama Kelenjar Harderian. Kelenjar ini sangat sensitif menangkap antigen virus. Vaksin yang diteteskan ke mata akan merangsang kelenjar ini untuk segera membentuk kekebalan mukosa lokal (IgA) di sepanjang rongga pernapasan atas, yang mana merupakan pintu masuk utama virus ND/IB dari udara."
+            },
+            {
+                q: "Kasus 9: Saat ayam berumur 15 hari, peternak mendapati ayamnya lesu dan kotoran di area kloaka berwarna putih kapur (Gumboro). Ia langsung memberikan antibiotik Enrofloxacin dosis tinggi selama 3 hari. Hasilnya, kematian justru meledak drastis. Kesalahan fatal apa yang terjadi secara fisiologis?",
+                options: [
+                    "Virus Gumboro memakan antibiotik tersebut untuk bereplikasi lebih cepat.",
+                    "Enrofloxacin berbenturan dengan sisa pakan di usus sehingga menjadi racun (toksik).",
+                    "Gumboro selalu diikuti peradangan/pembengkakan ginjal. Antibiotik keras dan dosis tinggi yang diekskresikan lewat ginjal akan memicu gagal ginjal akut.",
+                    "Antibiotik membunuh flora normal usus yang justru bertugas memakan virus Gumboro."
+                ],
+                answer: 2,
+                explanation: "Pada penyakit Gumboro, organ ginjal ayam biasanya ikut mengalami pembengkakan parah (nephritis) yang ditandai dengan urat (putih kapur) berlebih. Hampir semua antibiotik diekskresikan (dibuang) melalui ginjal. Jika ginjal yang sedang rusak 'dipaksa' menyaring antibiotik keras dosis tinggi, maka ginjal akan hancur (gagal ginjal), dan ayam akan mati karena keracunan ureum (uremia)."
+            },
+            {
+                q: "Kasus 10: Sebuah peternakan ayam petelur (layer) terserang wabah Coryza (Snot). Setelah diobati, klinis ayam tampak sehat kembali. Tiga bulan kemudian, terjadi cuaca ekstrem (pancaroba) dan wabah Snot meledak lagi di kandang yang sama, padahal biosekuriti ketat dan tidak ada ayam baru yang masuk. Penjelasan epidemiologis dari kasus ini adalah?",
+                options: [
+                    "Bakteri Coryza bersembunyi dan berkembang biak di dalam air minum toren (biofilm).",
+                    "Burung liar membawa varian bakteri Coryza dari luar negeri menembus biosekuriti.",
+                    "Vaksin lama yang dulu pernah disuntikkan tiba-tiba bermutasi kembali menjadi bakteri hidup mematikan.",
+                    "Ayam yang pernah sembuh dari Coryza akan menjadi 'Carrier' (pembawa bakteri) seumur hidup. Saat stres cuaca memicu imun turun, bakteri aktif kembali menularkan wabah."
+                ],
+                answer: 3,
+                explanation: "Sifat khas bakteri Avibacterium paragallinarum (Snot/Coryza) adalah kemampuannya menjadikan ayam yang sembuh sebagai 'carrier' kronis. Bakteri bersembunyi laten di dalam rongga hidung/sinus ayam. Ketika ayam mengalami stres lingkungan (cuaca ekstrem, pindah kandang), imunitasnya turun drastis, bakteri tersebut akan bereplikasi lagi dan menyebar menyebabkan wabah berulang (relapse) tanpa perlu ada sumber infeksi dari luar."
+            }
+        ];
+
+        const grid = document.getElementById('disease-grid');
+        const modal = document.getElementById('modal');
+        const diseaseSection = document.getElementById('disease-section');
+        const quizSection = document.getElementById('quiz-section');
+        const sectionTitle = document.getElementById('section-title');
+
+        // Render Cards Function
+        function renderCards(filterType = 'all') {
+            grid.innerHTML = '';
+            
+            const filteredDiseases = filterType === 'all' 
+                ? diseases 
+                : diseases.filter(d => d.type === filterType);
+
+            filteredDiseases.forEach(d => {
+                const card = document.createElement('div');
+                card.className = `card ${d.type}`;
+                const badgeClass = d.type === 'viral' ? 'badge viral' : 'badge bacterial';
+                const badgeText = d.type === 'viral' ? 'Virus' : 'Bakteri';
+                const titleColor = d.type === 'viral' ? 'var(--viral)' : 'var(--bacterial)';
+
+                card.innerHTML = `
+                    <div class="card-body">
+                        <div class="card-icon">${d.icon}</div>
+                        <span class="${badgeClass}">${badgeText}</span>
+                        <h3 class="card-title" style="color: ${titleColor}">${d.name}</h3>
+                        <p class="card-desc" style="color: var(--text-muted); font-size: 0.95rem;">${d.shortDesc}</p>
+                    </div>
+                `;
+                card.addEventListener('click', () => openModal(d));
+                grid.appendChild(card);
+            });
+        }
+
+        // Tab Switching Logic
+        function switchTab(tabId, btnElement) {
+            // Update buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            if (tabId === 'quiz') {
+                diseaseSection.classList.add('hidden');
+                quizSection.style.display = 'block';
+                renderQuiz();
+            } else {
+                quizSection.style.display = 'none';
+                diseaseSection.classList.remove('hidden');
+                
+                if(tabId === 'all') sectionTitle.textContent = 'Daftar Semua Penyakit';
+                if(tabId === 'viral') sectionTitle.textContent = 'Daftar Penyakit Viral (Virus)';
+                if(tabId === 'bacterial') sectionTitle.textContent = 'Daftar Penyakit Bakterial (Bakteri)';
+                
+                renderCards(tabId);
+            }
+        }
+
+        function openModal(data) {
+            document.getElementById('modal-title').textContent = data.name;
+            document.getElementById('modal-title').style.color = data.type === 'viral' ? 'var(--viral)' : 'var(--bacterial)';
+            document.getElementById('modal-etiology').textContent = `Etiologi: ${data.etiology}`;
+
+            // Build Prevention List
+            let prevHTML = `<ul class="mgmt-list">`;
+            data.prevention.forEach(item => { prevHTML += `<li>${item}</li>`; });
+            prevHTML += `</ul>`;
+
+            // Build Treatment List
+            let treatHTML = `<ul class="mgmt-list">`;
+            data.treatment.forEach(item => { 
+                // Highlight words
+                let text = item.replace(/(TIDAK ADA OBAT|TIDAK ADA|PENTING:|TIDAK MEMPAN)/g, '<strong>$1</strong>');
+                treatHTML += `<li>${text}</li>`; 
+            });
+            treatHTML += `</ul>`;
+
+            document.getElementById('modal-body').innerHTML = `
+                <div class="pathognomonic-box">
+                    <h3>⚡ Gejala Patognomonis (Tanda Khas)</h3>
+                    <p>${data.pathognomonic}</p>
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="color: var(--primary-dark); margin-bottom: 0.5rem; font-size: 1.1rem;">🔍 Temuan Anatomis (Nekropsi)</h3>
+                    <p>${data.anatomy}</p>
+                </div>
+
+                <div class="mgmt-grid">
+                    <div class="mgmt-card prevention">
+                        <h4>🛡️ Langkah Pencegahan</h4>
+                        ${prevHTML}
+                    </div>
+                    <div class="mgmt-card treatment">
+                        <h4>💊 Tindakan & Pengobatan</h4>
+                        ${treatHTML}
+                    </div>
+                </div>
+            `;
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        document.getElementById('close-modal').addEventListener('click', () => {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+
+        const quizContainer = document.getElementById('questions-container');
+        
+        function renderQuiz() {
+            // Only render if empty to avoid reset on tab switch unless desired
+            if(quizContainer.innerHTML.trim() !== '') return;
+
+            let html = '';
+            quizQuestions.forEach((q, index) => {
+                let optionsHtml = '';
+                q.options.forEach((opt, optIndex) => {
+                    optionsHtml += `
+                        <label class="option-label" id="label-q${index}-o${optIndex}">
+                            <input type="radio" name="q${index}" value="${optIndex}">
+                            <span>${opt}</span>
+                        </label>
+                    `;
+                });
+
+                html += `
+                    <div class="question-block" id="qb-${index}">
+                        <div class="question-text"><span class="badge">Soal ${index + 1} / 10</span> ${q.q}</div>
+                        <div class="options-group">
+                            ${optionsHtml}
+                        </div>
+                        <div class="explanation" id="exp-${index}">
+                            <strong>Analisis Jawaban Medis:</strong><br>${q.explanation}
+                        </div>
+                    </div>
+                `;
+            });
+            quizContainer.innerHTML = html;
+        }
+
+        function submitQuiz() {
+            let score = 0;
+            let allAnswered = true;
+
+            quizQuestions.forEach((q, index) => {
+                const selected = document.querySelector(`input[name="q${index}"]:checked`);
+                if (!selected) {
+                    allAnswered = false;
+                }
+            });
+
+            if(!allAnswered) {
+                alert("Mohon selesaikan dan jawab ke-10 kasus sebelum mengirimkan kuis!");
+                return;
+            }
+
+            // Grade and show feedback
+            quizQuestions.forEach((q, index) => {
+                const selected = document.querySelector(`input[name="q${index}"]:checked`);
+                const selectedVal = parseInt(selected.value);
+                const labels = document.querySelectorAll(`input[name="q${index}"]`);
+                
+                // Disable inputs
+                labels.forEach(input => input.disabled = true);
+
+                // Highlight correct and wrong
+                if(selectedVal === q.answer) {
+                    score++;
+                    document.getElementById(`label-q${index}-o${selectedVal}`).classList.add('correct');
+                } else {
+                    document.getElementById(`label-q${index}-o${selectedVal}`).classList.add('wrong');
+                    document.getElementById(`label-q${index}-o${q.answer}`).classList.add('correct');
+                }
+
+                // Show explanation
+                document.getElementById(`exp-${index}`).classList.add('show');
+            });
+
+            // Calculate final score
+            const finalScore = Math.round((score / quizQuestions.length) * 100);
+            
+            // Animate Score Counter
+            let currentScore = 0;
+            const scoreDisplay = document.getElementById('score-display');
+            const interval = setInterval(() => {
+                if (currentScore >= finalScore) {
+                    clearInterval(interval);
+                    scoreDisplay.textContent = finalScore;
+                } else {
+                    currentScore++;
+                    scoreDisplay.textContent = currentScore;
+                }
+            }, 15);
+            
+            let msg = '';
+            if(finalScore === 100) msg = "Sempurna! Anda memiliki insting dokter hewan yang sangat tajam.";
+            else if(finalScore >= 80) msg = "Luar Biasa! Kemampuan analisis medis Anda sudah sangat baik.";
+            else if(finalScore >= 60) msg = "Cukup Bagus! Pelajari lagi patofisiologi penyakit di buku saku.";
+            else msg = "Jangan menyerah! Baca dan pahami lagi materi biosekuriti & obat di Buku Saku.";
+            
+            document.getElementById('score-message').textContent = msg;
+            
+            document.getElementById('btn-submit-quiz').style.display = 'none';
+            document.getElementById('quiz-result').style.display = 'block';
+            window.scrollTo({ top: document.getElementById('quiz-result').offsetTop - 50, behavior: 'smooth' });
+        }
+
+        function resetQuiz() {
+            quizContainer.innerHTML = '';
+            document.getElementById('btn-submit-quiz').style.display = 'block';
+            document.getElementById('quiz-result').style.display = 'none';
+            renderQuiz();
+            window.scrollTo({ top: document.getElementById('quiz-section').offsetTop - 50, behavior: 'smooth' });
+        }
+
+        // Initialize App
+        renderCards('all');
+
+    </script>
+</body>
+</html>
